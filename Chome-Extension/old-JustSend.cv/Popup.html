@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <linkrel="stylesheet" href="styles.css">
+    <style>
+        body {
+            width: 320px;
+            padding: 16px;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background: linear-gradient(to bottom right, rgb(250, 245, 255), rgb(240, 251, 255));
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .logo {
+            width: 32px;
+            height: 32px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(to right, #9333ea, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #4b5563;
+        }
+        .user-details {
+            flex: 1;
+        }
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #111827;
+        }
+        .user-email {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .status {
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .status.connected {
+            background-color: #ecfdf5;
+            color: #065f46;
+        }
+        .status.disconnected {
+            background-color: #fef2f2;
+            color: #991b1b;
+        }
+        .action-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(to right, #9333ea, #06b6d4);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+        .action-button:hover {
+            opacity: 0.9;
+        }
+        .action-button:disabled {
+            background: #e5e7eb;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="icon48.png" alt="Logo" class="logo">
+            <span class="title">JustSend.cv</span>
+        </div>
+        <div id="userContainer" style="display: none;">
+            <div class="user-info">
+                <div class="avatar" id="userAvatar">JS</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">Użytkownik</div>
+                    <div class="user-email" id="userEmail">user@example.com</div>
+                </div>
+            </div>
+        </div>
+        <div id="statusContainer" class="status">
+            Sprawdzanie połączenia...
+        </div>
+        <button id="actionButton" class="action-button">Połącz z aplikacją</button>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
+

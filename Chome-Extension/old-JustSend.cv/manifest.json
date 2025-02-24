@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "JustSend.cv",
+  "version": "1.0",
+  "description": "Rozszerzenie do zapisywania ofert pracy",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "cookies",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://*.pracuj.pl/*",
+    "https://*.linkedin.com/*",
+    "https://*.indeed.com/*",
+    "https://*.rocketjobs.pl/*",
+    "https://*.nofluffjobs.com/*",
+    "https://*.gowork.pl/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "Popup.html",
+    "default_icon": {
+      "24": "icon24.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "24": "icon24.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.pracuj.pl/praca/*",
+        "https://*.linkedin.com/jobs/*",
+        "https://*.indeed.com/*",
+        "https://*.rocketjobs.pl/oferta-pracy/*",
+        "https://*.nofluffjobs.com/pl/job/*",
+        "https://*.gowork.pl/oferta/*"
+      ],
+      "css": ["styles.css", "button.css"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [{
+    "resources": ["icon64.png"],
+    "matches": ["<all_urls>"]
+  }]
+}
+

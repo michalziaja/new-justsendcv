@@ -1,0 +1,202 @@
+.save-button {
+  z-index: 999999;
+  background: linear-gradient(90deg, #8B5CF6 0%, #22D3EE 100%);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  width: 390px; 
+  /* max-width: 85%;  */
+  height: 54px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-family: 'Open Sans', sans-serif;
+  transition: background-color 0.3s ease;
+  margin-top: 0px;
+  margin-bottom: 5px;
+  box-sizing: border-box; /* Dodane, aby padding nie zwiększał szerokości */
+  transition: width 0.3s ease;
+}
+
+.save-button:hover {
+  background: linear-gradient(90deg, #22D3EE 0%, #8B5CF6 100%);
+}
+
+.save-button-saved {
+  background: linear-gradient(90deg, #7dddec 0%, #a686f1 100%); /* Reversed gradient for saved state */
+  cursor: default; /* Wyłącz wskaźnik wskazujący na kliknięcie */
+  pointer-events: none; /* Wyłącz możliwość kliknięcia */
+  transition: none; /* Wyłącz przejścia */
+}
+
+/* Wyłącz efekt hover dla przycisku z klasą save-button-saved */
+.save-button-saved:hover {
+  background-color: #4caf50;
+}
+
+/* Media Query dla mniejszych ekranów */
+@media (max-width: 480px) {
+  .save-button {
+      font-size: 14px; /* Zmniejsz rozmiar czcionki dla mniejszych ekranów */
+      width: 100%; /* Zajmij całą dostępną szerokość */
+      height: 90%;
+      padding-left: 10px;
+      padding-right: 10px;
+  }
+}
+@layer base {
+  :root {
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+/* Specyficzne style dla gowork.pl */
+.gowork-save-button {
+    transition: width 0.3s ease;
+    min-width: 227px;
+    max-width: 317px;
+}
+
+/* Style dla panelu bocznego */
+.side-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: white;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+    z-index: 999999;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.side-panel.open {
+    right: 0;
+}
+
+.side-panel-header {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to right, #9333ea, #06b6d4);
+}
+
+.side-panel-header h2 {
+    margin: 0;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 8px;
+    line-height: 1;
+}
+
+.side-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.job-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    color: #111827;
+}
+
+.job-info h4 {
+    margin: 0 0 20px 0;
+    font-size: 16px;
+    color: #6b7280;
+}
+
+.job-info .section {
+    margin-bottom: 20px;
+}
+
+.job-info h5 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #374151;
+}
+
+.job-info .text-content {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #4b5563;
+}
+
+/* Przycisk do otwierania panelu */
+.side-panel-button {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 64px;
+    height: 64px;
+    background: white;
+    border: none;
+    border-radius: 8px 0 0 8px;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    z-index: 999998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    transition: all 0.2s ease;
+}
+
+.side-panel-button:hover {
+    transform: translateY(-50%) translateX(-4px);
+    background: #f8f8f8;
+}
+
+.side-panel-button img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+}
+
+/* Scrollbar styling */
+.side-panel-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.side-panel-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.side-panel-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.side-panel-content::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}

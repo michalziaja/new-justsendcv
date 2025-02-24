@@ -1,0 +1,41 @@
+create table public.profiles (
+  user_id text not null default 'requesting_user_id'::text,
+  created_at timestamp with time zone null default now(),
+  first_name text null,
+  last_name text null,
+  birth_date date null,
+  email text null,
+  avatar text null,
+  about_me text null,
+  city text null,
+  social_links text null,
+  calendar_note text null,
+  subscription boolean null default false,
+  goal numeric null,
+  checklist text null,
+  id integer not null default nextval('tasks_id_seq'::regclass),
+  constraint profiles_pkey primary key (id)
+) TABLESPACE pg_default;
+
+
+
+-- Włączenie Row-Level Security (RLS)
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Polityka RLS: Użytkownik może odczytywać tylko swój własny profil
+CREATE POLICY "Users can view their own profile" 
+ON profiles 
+FOR SELECT 
+USING (auth.uid() = user_id);
+
+-- Polityka RLS: Użytkownik może tworzyć swój własny profil
+CREATE POLICY "Users can create their own profile" 
+ON profiles 
+FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
+
+-- Polityka RLS: Użytkownik może aktualizować swój własny profil
+CREATE POLICY "Users can update their own profile" 
+ON profiles 
+FOR UPDATE 
+USING (auth.uid() = user_id);

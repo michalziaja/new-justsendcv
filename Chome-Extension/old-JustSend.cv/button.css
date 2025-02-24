@@ -1,0 +1,32 @@
+/* Gradient button style */
+.gradient-button {
+    background: linear-gradient(90deg, #8B5CF6 0%, #22D3EE 100%);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+  }
+  
+  .gradient-button:hover {
+    opacity: 0.9;
+  }
+  
+  /* Individual color variables if you need them separately */
+  :root {
+    --purple-color: #8B5CF6;
+    --cyan-color: #22D3EE;
+  }
+  
+  /* Solid color buttons if needed */
+  .purple-button {
+    background-color: var(--purple-color);
+    border: none;
+    color: white;
+  }
+  
+  .cyan-button {
+    background-color: var(--cyan-color);
+    border: none;
+    color: white;
+  }

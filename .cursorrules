@@ -1,0 +1,68 @@
+## Project Stack
+- Framework: Next.js 15 App Router, TypeScript, React 18, Node.js, Shadcn UI
+- Backend: Supabase with Postgres
+- Authentication: Supabase Auth
+- UI: Shadcn UI, Tailwind CSS
+- AI: GeminiAI
+
+## Project Structure
+- src/
+  - app/
+    - api/
+    - auth/
+  - components/
+  - config/
+  - hooks/
+  - lib/
+  - types/
+  - utils/
+  - styles/
+  - public/
+  - .env.local
+  - .env.local
+
+### Coding Standards
+- Use TypeScript for type safety
+- Follow ESLint and Prettier configurations
+- Implement responsive design with Tailwind CSS
+
+### TypeScript
+- Write strictly typed code
+- Prefer types over interfaces
+- Use type inference when possible
+- Avoid any, any[], unknown types
+
+### React
+- Write small, reusable components
+- Minimize use of useState and useEffect
+- Use props for data flow
+
+### Component Guidelines
+- Create reusable components in `src/components`
+- Use Shadcn UI and Radix UI for component foundations
+- Follow best practices for naming and organizing components
+
+### API and Database
+- Use Supabase for database operations and authentication
+- Create API routes in `src/app/api`
+- Implement Stripe webhooks for payment synchronization
+
+### Authentication
+- Use Supabase Auth for authentication
+- Implement role-based access control (RBAC)
+- Handle session management
+
+### Documentation
+- Document API endpoints and database schema
+- Maintain a README with setup instructions and project overview
+
+### Testing
+- Write unit tests for components and utilities
+- Implement integration tests for critical user flows
+- Use Jest and React Testing Library
+
+### Error Handling
+- Implement comprehensive error handling
+- Provide user-friendly error messages
+- Log errors for debugging
+
