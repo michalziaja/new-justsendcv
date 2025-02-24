@@ -44,12 +44,12 @@ export function NavSecondary() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1">
-        <SidebarMenu className="list-none">
+        <SidebarMenu className="list-none mt-10">
           <SidebarMenuItem className="list-none">
             <Card className="shadow-none border-none">
               <CardHeader className="p-4">
                 <div 
-                  className="flex items-center gap-2 cursor-pointer min-h-[40px]"
+                  className="flex items-center gap-2 cursor-pointer min-h-[30px]"
                   onClick={() => setIsExtensionsOpen(!isExtensionsOpen)}
                 >
                   <Globe className="h-5 w-5" />
@@ -60,7 +60,7 @@ export function NavSecondary() {
                 </div>
                 {isExtensionsOpen && (
                   <CardDescription className="mt-2">
-                    Zainstaluj wtyczkę JustSend.cv aby szybko aplikować na oferty pracy.
+                    Zainstaluj JustSend.cv w swojej przeglądarce.
                   </CardDescription>
                 )}
               </CardHeader>
@@ -108,7 +108,7 @@ export function NavSecondary() {
                 onClick={handleUpgrade}
                 className="w-full text-left text-sm text-primary hover:underline px-4 py-2"
               >
-                Ulepsz do Premium
+                Aktywuj Premium
               </button>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -117,3 +117,4 @@ export function NavSecondary() {
     </div>
   )
 } 
+

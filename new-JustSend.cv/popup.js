@@ -1,4 +1,3 @@
-
 // document.addEventListener("DOMContentLoaded", async () => {
 //   const statusElement = document.getElementById("status");
 //   const noteForm = document.getElementById("noteForm");
@@ -84,8 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Sprawdzenie statusu logowania
   try {
-    // const response = await fetch("http://localhost:3000/api/sync", { 
-    const response = await fetch("https://29b9-2a01-115f-4902-7900-c9a1-71d4-cd7b-bad5.ngrok-free.app/api/sync", {
+    const response = await fetch("https://8b81-2a01-115f-4902-7900-f08a-fe17-f217-fa8e.ngrok-free.app/api/sync", {
       method: "GET",
       credentials: "include",
     });
@@ -94,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     isLoggedIn = response.ok && data.isLoggedIn;
 
     if (isLoggedIn) {
-      statusElement.textContent = "Jesteś zalogowany!";
+      statusElement.textContent = `Zalogowany jako: ${data.userData?.email}`;
       jobForm.classList.add("visible");
     } else {
       statusElement.textContent = "Nie jesteś zalogowany.";

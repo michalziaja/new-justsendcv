@@ -39,6 +39,7 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
     --sidebar-width: 250px;
   }
+  
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
@@ -74,30 +75,18 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
     --sidebar-width: 250px;
   }
-}
 
-@layer base {
   * {
     @apply border-[hsl(var(--border))] outline-[hsl(var(--ring))]/50;
   }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
   }
 }
 
 @media (max-width: 700px) {
   :root {
     --sidebar-width: 0px;
-  }
-}
-
-
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }

@@ -1,3 +1,4 @@
+//components/nav-user.tsx
 "use client"
 
 import { UserCircle, LogOut, CreditCard, Loader2, ChevronsUpDown } from "lucide-react"
@@ -75,6 +76,28 @@ export function NavUser() {
     }
   }
 
+  if (!isLoaded) {
+    return (
+      <SidebarMenuItem className="list-none">
+        <SidebarMenuButton
+          size="lg"
+          className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground w-full"
+        >
+          <Avatar className="h-8 w-8 rounded-lg">
+            <AvatarFallback className="rounded-lg bg-muted animate-pulse" />
+          </Avatar>
+          <div className="grid flex-1 gap-1">
+            <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+            <div className="h-3 w-32 rounded bg-muted animate-pulse" />
+          </div>
+          <ChevronsUpDown className="ml-auto size-4 text-muted" />
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    )
+  }
+
+  const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : '';
+
   return (
     <SidebarMenuItem className="list-none">
       <DropdownMenu>
@@ -86,7 +109,7 @@ export function NavUser() {
             <Avatar className="h-8 w-8 rounded-lg">
               <AvatarImage src={user?.imageUrl} alt={user?.firstName || ''} />
               <AvatarFallback className="rounded-lg">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                {initials}
               </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -167,3 +190,5 @@ export function NavUser() {
     </SidebarMenuItem>
   )
 } 
+
+

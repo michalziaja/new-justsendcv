@@ -75,7 +75,7 @@ export default function UpgradePage() {
             <CardDescription>Dla profesjonalistów</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold mb-6">39 zł/msc</div>
+            <div className="text-3xl font-bold mb-6">29 zł/msc</div>
             <ul className="space-y-2">
               <li className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-green-500" />

@@ -1,3 +1,5 @@
+//app/api/webhooks/stripe/route.ts
+
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
@@ -58,3 +60,4 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ received: true }, { status: 200 });
 }
+

@@ -1,3 +1,4 @@
+//api/subscription-info/route.tsx
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";

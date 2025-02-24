@@ -1,3 +1,4 @@
+//app/api/subscriptions/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
@@ -31,15 +32,14 @@ export async function POST(request: Request) {
     .eq("user_id", userId)
     .single();
 
-  if (plan === "free") {
-    // Nie pozwalamy na downgrade do planu darmowego
-    if (existingSubscription?.plan === "premium") {
-      return NextResponse.json(
-        { error: "Nie można zmienić planu premium na darmowy" },
-        { status: 400 }
-      );
-    }
+  if (existingSubscription) {
+    return NextResponse.json(
+      { message: "Subscription already exists" },
+      { status: 200 }
+    );
+  }
 
+  if (plan === "free") {
     // Tworzenie planu darmowego
     const { data, error } = await supabase
       .from("subscriptions")
@@ -61,20 +61,18 @@ export async function POST(request: Request) {
       payment_method_types: ["card"],
       line_items: [
         {
-          price: process.env.STRIPE_PREMIUM_PRICE_ID,
+          price: process.env.STRIPE_PREMIUM_PRICE_ID, // ID ceny z Stripe Dashboard
           quantity: 1,
         },
       ],
       mode: "subscription",
       success_url: `${request.headers.get("origin")}/success`,
-      cancel_url: `${request.headers.get("origin")}/upgrade`,
+      cancel_url: `${request.headers.get("origin")}/welcome`,
       metadata: { userId },
       allow_promotion_codes: true,
     });
 
     return NextResponse.json({ sessionId: session.id }, { status: 200 });
   }
-
-  return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 }
 
