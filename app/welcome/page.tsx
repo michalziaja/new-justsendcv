@@ -155,10 +155,11 @@
 //   );
 // }
 
+//app/welcome/page.tsx
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react"; // Dodano useTransition
 import { useUser } from "@clerk/nextjs";
 import { loadStripe } from "@stripe/stripe-js";
 import { Button } from "@/components/ui/button";
@@ -172,6 +173,48 @@ export default function WelcomePage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
+  const [isPending, startTransition] = useTransition(); // Dodano useTransition
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!user || !isLoaded) {
+        setIsCheckingSubscription(false);
+        return;
+      }
+
+      startTransition(async () => { // Użycie useTransition do opóźnienia renderowania
+        try {
+          const response = await fetch(`/api/subscription-check`, {
+            headers: { "Content-Type": "application/json" },
+          });
+          const data = await response.json();
+
+          if (!response.ok) {
+            console.error("Błąd pobierania subskrypcji:", data.error);
+            setIsCheckingSubscription(false);
+            return;
+          }
+
+          if (data.status !== null || data.plan !== null) {
+            router.push("/dashboard");
+            return;
+          }
+
+          setSubscriptionStatus(data.status);
+          setSubscriptionPlan(data.plan);
+        } catch (error) {
+          console.error("Error fetching subscription:", error);
+        } finally {
+          setIsCheckingSubscription(false);
+        }
+      });
+    };
+
+    fetchSubscription();
+  }, [user, isLoaded, startTransition]); // Dodano startTransition do zależności
 
   const handlePlanSelect = async (plan: "free" | "premium") => {
     if (!user || !isLoaded) return;
@@ -184,14 +227,25 @@ export default function WelcomePage() {
         body: JSON.stringify({ plan, userId: user.id }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error("Nieprawidłowy JSON w odpowiedzi:", jsonError);
+        throw new Error("Serwer zwrócił nieprawidłową odpowiedź");
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Nie udało się aktywować planu");
       }
 
       if (plan === "free") {
-        router.push("/dashboard");
+        const { status, plan: serverPlan } = data;
+        if (status === "active" && serverPlan === "free") {
+          router.push("/dashboard");
+        } else {
+          alert("Twoja subskrypcja nie jest jeszcze aktywna. Zakończ płatność lub poczekaj na potwierdzenie.");
+        }
       } else if (plan === "premium") {
         const stripe = await stripePromise;
         if (!stripe) throw new Error("Nie udało się załadować Stripe");
@@ -205,7 +259,8 @@ export default function WelcomePage() {
     }
   };
 
-  if (!isLoaded) {
+  // Wyświetlaj spinner, dopóki isLoaded i isCheckingSubscription są true, lub jeśli jest pending transition
+  if (!isLoaded || isCheckingSubscription || isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin mr-2" />
@@ -214,6 +269,7 @@ export default function WelcomePage() {
     );
   }
 
+  // Jeśli nie ma subskrypcji, wyświetl interfejs wyboru planu
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="text-center mb-12">
@@ -237,7 +293,11 @@ export default function WelcomePage() {
             <ul className="space-y-2">
               <li className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-green-500" />
-                <span>20 zapisanych ofert pracy</span>
+                <span>Bez podawania karty kredytowej</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-500" />
+                <span>10 zapisanych ofert pracy</span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-green-500" />

@@ -1,3 +1,4 @@
+//odpowiada za pobieranie informacji o subskrypcji i wyświetlanie ich w panelu użytkownika
 //api/subscription-info/route.tsx
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";

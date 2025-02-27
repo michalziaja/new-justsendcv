@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Chrome, FileBox, Globe, ChevronsUpDown } from "lucide-react"
-import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar"
 import {
@@ -20,22 +19,8 @@ const EXTENSIONS = {
 }
 
 export function NavSecondary() {
-  const { user } = useUser()
   const router = useRouter()
-  const [currentPlan, setCurrentPlan] = useState<string | null>(null)
-  const [isLoadingPlan, setIsLoadingPlan] = useState(true)
   const [isExtensionsOpen, setIsExtensionsOpen] = useState(false)
-
-  useEffect(() => {
-    if (user) {
-      setIsLoadingPlan(true)
-      fetch("/api/subscription-info", { method: "GET" })
-        .then((res) => res.json())
-        .then((data) => setCurrentPlan(data.subscription?.plan || "free"))
-        .catch((err) => console.error("Error fetching subscription:", err))
-        .finally(() => setIsLoadingPlan(false))
-    }
-  }, [user])
 
   const handleUpgrade = () => {
     router.push("/upgrade")
@@ -100,21 +85,19 @@ export function NavSecondary() {
         </SidebarMenu>
       </div>
 
-      {!isLoadingPlan && currentPlan === "free" && (
-        <div className="mt-auto mb-4">
-          <SidebarMenu className="list-none">
-            <SidebarMenuItem className="list-none">
-              <button
-                onClick={handleUpgrade}
-                className="w-full text-left text-sm text-primary hover:underline px-4 py-2"
-              >
-                Aktywuj Premium
-              </button>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </div>
-      )}
+      <div className="mt-auto mb-4">
+        <SidebarMenu className="list-none">
+          <SidebarMenuItem className="list-none">
+            <button
+              onClick={handleUpgrade}
+              className="w-full text-left text-sm text-primary hover:underline px-4 py-2"
+            >
+              Aktywuj Premium
+            </button>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </div>
     </div>
   )
-} 
+}
 
