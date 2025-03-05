@@ -1,3 +1,4 @@
+//api/webhooks/stripe/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
@@ -34,87 +35,86 @@ export async function POST(request: Request) {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      
-      // Pobierz subskrypcję po ID z sesji
-      const subscriptionId = session.subscription as string;
-      const subscription = subscriptionId ? await stripe.subscriptions.retrieve(subscriptionId) : null;
-
-      // Próba pobrania userId z różnych miejsc
-      let userId = session.metadata?.userId || 
-                  session.client_reference_id ||
-                  subscription?.metadata?.userId;
-
-      // Jeśli nadal brak userId, spróbuj pobrać z klienta
-      if (!userId && session.customer) {
-        const customer = await stripe.customers.retrieve(session.customer as string) as Stripe.Customer;
-        if ('metadata' in customer) {
-          userId = customer.metadata?.userId;
-        }
-      }
+      const userId = session.metadata?.userId;
 
       if (!userId) {
-        console.error("Brak userId w metadanych sesji i nie można go pobrać z customer");
-        return new NextResponse(
-          JSON.stringify({ error: "Missing userId in session metadata" }),
+        console.error("Brak userId w metadanych sesji Stripe – wymagane dla Clerk");
+        return NextResponse.json(
+          { error: "Missing userId in session metadata" },
           { status: 400 }
         );
       }
+
+      const subscriptionId = session.subscription as string;
 
       if (!subscriptionId) {
-        console.error("Brak wymaganych danych w sesji Stripe:", { userId, subscriptionId });
-        return new NextResponse(
-          JSON.stringify({ error: "Missing required data in Stripe session" }),
+        console.warn("Brak subscriptionId w sesji Stripe dla użytkownika:", userId);
+        return NextResponse.json(
+          { error: "Missing subscriptionId in Stripe session" },
           { status: 400 }
         );
       }
 
-      // Pobieranie szczegółów subskrypcji ze Stripe
+      // Sprawdź, czy sesja Stripe zakończyła się sukcesem (pomyślna płatność)
+      if (session.payment_status !== "paid") {
+        console.warn("Płatność nie została zrealizowana, pomijanie aktualizacji:", subscriptionId);
+        return NextResponse.json({ received: true, status: "skipped_unpaid" }, { status: 200 });
+      }
+
+      // Sprawdź status subskrypcji
       const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+      if (stripeSubscription.status !== "active") {
+        console.warn("Subskrypcja Stripe nie jest aktywna, pomijanie aktualizacji:", subscriptionId);
+        return NextResponse.json({ received: true, status: "skipped_non_active" }, { status: 200 });
+      }
+
       const periodStart = new Date(stripeSubscription.current_period_start * 1000);
       const periodEnd = new Date(stripeSubscription.current_period_end * 1000);
 
-      // Sprawdź aktualną subskrypcję przed upsert
-      const { data: existingSubscription } = await supabase
+      // Pobierz istniejącą subskrypcję, aby zachować current_offers, total_offers, i cv_creator_used
+      const { data: existingSubscription, error: fetchError } = await supabase
         .from("subscriptions")
-        .select("*")
+        .select("current_offers, total_offers, cv_creator_used, stripe_subscription_id, plan")
         .eq("user_id", userId)
         .single();
 
-      // console.log("Istniejąca subskrypcja:", existingSubscription);
-      console.log("Subskrybcja ulepszona do Premium")
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error("Błąd pobierania subskrypcji:", fetchError);
+        return NextResponse.json(
+          { error: "Failed to fetch subscription", details: fetchError.message },
+          { status: 500 }
+        );
+      }
+
+      // Jeśli użytkownik ma plan Free, pozwól na aktualizację do Premium po udanej płatności
+      if (existingSubscription?.plan === "free" && !existingSubscription.stripe_subscription_id) {
+        console.log("Ulepszenie z planu Free na Premium dla użytkownika:", userId);
+      } else if (existingSubscription?.stripe_subscription_id === subscriptionId) {
+        console.log("Ta sesja została już przetworzona, pomijam:", subscriptionId);
+        return NextResponse.json({ received: true, status: "already_processed" }, { status: 200 });
+      }
+
       // Tworzenie lub aktualizacja subskrypcji w bazie danych
       const { error } = await supabase
         .from("subscriptions")
-        .upsert(
-          {
-            user_id: userId,
-            plan: "premium",
-            status: "active",
-            stripe_subscription_id: subscriptionId,
-            start_date: periodStart.toISOString(),
-            end_date: periodEnd.toISOString(),
-            current_limit: null,
-            total_limit: null,
-            current_offers: existingSubscription?.current_offers ?? 0,
-            total_offers: existingSubscription?.total_offers ?? 0,
-            cv_creator_limit: 50,
-            cv_creator_used: existingSubscription?.cv_creator_used ?? 0,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'user_id',
-            ignoreDuplicates: false
-          }
-        );
+        .upsert({
+          user_id: userId,
+          plan: "premium",
+          status: "active",
+          stripe_subscription_id: subscriptionId,
+          start_date: periodStart.toISOString(),
+          end_date: periodEnd.toISOString(),
+          current_limit: null,
+          total_limit: null,
+          current_offers: existingSubscription?.current_offers ?? 0,
+          total_offers: existingSubscription?.total_offers ?? 0,
+          cv_creator_limit: 50,
+          cv_creator_used: existingSubscription?.cv_creator_used ?? 0,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
 
       if (error) {
         console.error("Błąd aktualizacji/utworzenia subskrypcji:", error);
-        console.error("Dane próby upsert:", {
-          userId,
-          subscriptionId,
-          periodStart,
-          periodEnd
-        });
         return NextResponse.json(
           { error: "Failed to update/create subscription", details: error.message },
           { status: 500 }
@@ -127,69 +127,40 @@ export async function POST(request: Request) {
         p_notification_type: "subscription_activated",
         p_message: "Subskrypcja Premium aktywowana!",
       });
-    } else if (event.type === "invoice.payment_failed") {
-      const invoice = event.data.object as Stripe.Invoice;
-      const subscriptionId = invoice.subscription as string;
+    } else if (event.type === "customer.subscription.deleted" || event.type === "customer.subscription.updated") {
+      let subscription: Stripe.Subscription | null = null; // Inicjalizacja z null
+      let userId: string | undefined;
 
-      const { data: subscription, error: fetchError } = await supabase
-        .from("subscriptions")
-        .select("user_id")
-        .eq("stripe_subscription_id", subscriptionId)
-        .single();
+      if (event.type === "customer.subscription.deleted") {
+        subscription = event.data.object as Stripe.Subscription;
+        userId = subscription.metadata?.userId;
+      } else if (event.type === "customer.subscription.updated") {
+        subscription = event.data.object as Stripe.Subscription;
+        userId = subscription.metadata?.userId;
 
-      let userId = subscription?.user_id;
-      if (!userId && !fetchError) {
-        console.warn("Brak userId w subskrypcji – próba pobrania z customer");
-        const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
-        if (stripeSub.customer) {
-          const customer = await stripe.customers.retrieve(stripeSub.customer as string) as Stripe.Customer;
-          userId = customer.metadata?.userId;
+        // Sprawdź, czy subskrypcja jest ustawiona na anulowanie na koniec okresu lub jest przywracana
+        if (subscription.cancel_at_period_end) {
+          console.log("Subskrypcja ustawiona na anulowanie na koniec okresu:", subscription.id);
+        } else if (subscription.status === "active") {
+          console.log("Subskrypcja przywrócona do stanu aktywnego:", subscription.id);
+        } else {
+          console.warn("Subskrypcja nie wymaga aktualizacji, pomijanie:", subscription.id);
+          return NextResponse.json({ received: true, status: "skipped_no_update_needed" }, { status: 200 });
         }
       }
 
-      if (fetchError) {
-        if (fetchError.code === 'PGRST116') { // Brak wierszy – ignoruj, jeśli subskrypcja nie istnieje
-          console.warn("Nie znaleziono subskrypcji dla invoice.payment_failed – ignorowanie.");
-          return NextResponse.json({ received: true }, { status: 200 });
-        }
-        console.error("Błąd pobierania subskrypcji dla invoice.payment_failed:", fetchError);
+      if (!subscription || !userId) {
+        console.error("Brak subskrypcji lub userId w metadanych – wymagane dla Clerk");
         return NextResponse.json(
-          { error: "Failed to fetch subscription for failed payment", details: fetchError.message },
-          { status: 500 }
+          { error: "Missing subscription or userId in metadata" },
+          { status: 400 }
         );
       }
-
-      // Nie aktualizuj subskrypcji – cron zajmie się zmianą po end_date
-      // Powiadomienie o nieudanej płatności
-      await supabase.rpc("notify_subscribers", {
-        p_user_id: userId,
-        p_notification_type: "payment_failed",
-        p_message: "Płatność subskrypcji Premium nie powiodła się. Subskrypcja pozostanie aktywna do końca okresu.",
-      });
-    } else if (event.type === "customer.subscription.deleted") {
-      const subscription = event.data.object as Stripe.Subscription;
-      const userId = subscription.metadata?.userId;
-
-      // if (!userId) {
-      //   console.warn("Brak userId w metadanych subskrypcji – próba pobrania z customer");
-      //   if (subscription.customer) {
-      //     const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
-      //     userId = customer.metadata?.userId;
-      //   }
-      // }
-
-      // if (!userId) {
-      //   console.error("Brak userId w metadanych subskrypcji ani customer");
-      //   return NextResponse.json(
-      //     { error: "Missing userId in subscription metadata or customer" },
-      //     { status: 400 }
-      //   );
-      // }
 
       // Pobierz aktualną subskrypcję
       const { data: existingSubscription, error: fetchError } = await supabase
         .from("subscriptions")
-        .select("stripe_subscription_id")
+        .select("stripe_subscription_id, status, plan, end_date")
         .eq("user_id", userId)
         .single();
 
@@ -201,30 +172,49 @@ export async function POST(request: Request) {
         );
       }
 
-      // Usuń stripe_subscription_id, pozostawiając plan Premium do końca end_date
-      if (existingSubscription) {
-        const { error } = await supabase
-          .from("subscriptions")
-          .update({
-            stripe_subscription_id: null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", userId);
-
-        if (error) {
-          console.error("Błąd aktualizacji subskrypcji po anulowaniu:", error);
-          return NextResponse.json(
-            { error: "Failed to update subscription after cancellation", details: error.message },
-            { status: 500 }
-          );
-        }
+      if (!existingSubscription) {
+        console.warn("Nie znaleziono subskrypcji dla użytkownika:", userId);
+        return NextResponse.json({ received: true, status: "subscription_not_found" }, { status: 200 });
       }
 
-      // Powiadomienie o anulowaniu subskrypcji
+      // Zaktualizuj status w zależności od sytuacji
+      let newStatus: string;
+      if (subscription.cancel_at_period_end || event.type === "customer.subscription.deleted") {
+        newStatus = "pending_cancellation";
+        console.log("Zmiana statusu na 'pending_cancellation' dla użytkownika:", userId);
+      } else if (!subscription.cancel_at_period_end && subscription.status === "active") {
+        newStatus = "active";
+        console.log("Zmiana statusu na 'active' dla użytkownika:", userId);
+      } else {
+        console.warn("Brak konieczności aktualizacji statusu, pomijanie:", userId);
+        return NextResponse.json({ received: true, status: "skipped_no_status_change" }, { status: 200 });
+      }
+
+      // Aktualizacja subskrypcji w bazie danych
+      const { error } = await supabase
+        .from("subscriptions")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Błąd aktualizacji subskrypcji:", error);
+        return NextResponse.json(
+          { error: "Failed to update subscription", details: error.message },
+          { status: 500 }
+        );
+      }
+
+      // Powiadomienie o zmianie statusu
+      const notificationMessage = newStatus === "pending_cancellation"
+        ? "Subskrypcja Premium została anulowana, ale pozostaje aktywna do końca okresu."
+        : "Subskrypcja Premium została przywrócona do stanu aktywnego.";
       await supabase.rpc("notify_subscribers", {
         p_user_id: userId,
-        p_notification_type: "subscription_cancelled",
-        p_message: "Subskrypcja Premium została anulowana, ale pozostaje aktywna do końca okresu.",
+        p_notification_type: newStatus === "pending_cancellation" ? "subscription_cancelled" : "subscription_restored",
+        p_message: notificationMessage,
       });
     }
 

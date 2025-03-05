@@ -4,7 +4,7 @@
 import { UserCircle, LogOut, CreditCard, Loader2, ChevronsUpDown } from "lucide-react"
 import { useClerk, useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,16 @@ export function NavUser() {
   const { user, isLoaded } = useUser()
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingPortal, setIsLoadingPortal] = useState(false)
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (user) {
+      fetch("/api/subscription-info", { method: "GET" })
+        .then((res) => res.json())
+        .then((data) => setCurrentPlan(data.subscription?.plan || "free"))
+        .catch((err) => console.error("Error fetching subscription:", err))
+    }
+  }, [user])
 
   const handleSignOut = async () => {
     setIsLoading(true)
@@ -38,8 +48,32 @@ export function NavUser() {
     }
   }
 
-  const handleSubscriptionClick = () => {
-    router.push("/upgrade")
+  const handleSubscriptionClick = async () => {
+    if (currentPlan === "free") {
+      router.push("/upgrade")
+      return
+    }
+
+    setIsLoadingPortal(true)
+    try {
+      const response = await fetch("/api/stripe-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id }),
+      })
+      
+      const data = await response.json()
+      
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error("Nie udało się uzyskać dostępu do portalu subskrypcji")
+      }
+    } catch (error) {
+      alert("Wystąpił błąd podczas otwierania portalu subskrypcji")
+    } finally {
+      setIsLoadingPortal(false)
+    }
   }
 
   if (!isLoaded) {
@@ -73,7 +107,7 @@ export function NavUser() {
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground w-full"
           >
             <Avatar className="h-8 w-8 rounded-lg">
-              <AvatarImage src={user?.imageUrl} alt={user?.firstName ?? ''} />
+              <AvatarImage src={user?.imageUrl} alt={user?.firstName || ''} />
               <AvatarFallback className="rounded-lg">
                 {initials}
               </AvatarFallback>
@@ -108,15 +142,30 @@ export function NavUser() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuLabel className="font-normal px-2 py-1.5">
+            <span className={`text-xs inline-block ${
+              currentPlan === "premium" ? "text-primary" : "text-muted-foreground"
+            }`}>
+              Plan: {currentPlan === "premium" ? "Premium" : "Free"}
+            </span>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            {/* <DropdownMenuItem 
+            <DropdownMenuItem 
               onClick={handleSubscriptionClick}
               className="flex items-center gap-2"
               disabled={isLoadingPortal}
             >
               <CreditCard className="h-4 w-4" />
-              <span>Subskrypcja</span>
-            </DropdownMenuItem> */}
+              {isLoadingPortal ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Ładowanie...
+                </span>
+              ) : (
+                <span>Subskrypcja</span>
+              )}
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>

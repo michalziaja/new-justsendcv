@@ -1,0 +1,45 @@
+{
+    "manifest_version": 3,
+    "name": "newJustSend.cv Extension",
+    "version": "1.0",
+    "description": "Chrome extension for JustSend.cv",
+    "permissions": [
+      "storage",
+      "identity",
+      "activeTab",
+      "notifications"
+    ],
+    "host_permissions": [
+      "https://4e7b-2a01-115f-4902-7900-489-ae8f-ed51-7751.ngrok-free.app/*",
+      "https://qnndkrwmxbvicznvfjsk.supabase.co/*"
+      
+    ],
+    "content_scripts": [
+    {
+        "matches": ["*://*.pracuj.pl/praca/*"],
+        "js": ["pracujConfig.js", "content.js"]
+    },
+    {
+        "matches": ["*://*.rocketjobs.pl/oferta-pracy/*"],
+        "js": ["rocketjobsConfig.js", "content.js"]
+    },
+    {
+        "matches": ["*://*.justjoin.it/job-offer/*"],
+        "js": ["justjoinConfig.js", "content.js"]
+      }
+    ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "48": "icon48.png",
+        "128": "icon128.png"
+      }
+    },
+    "icons": {
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  }

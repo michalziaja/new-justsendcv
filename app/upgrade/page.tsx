@@ -41,7 +41,7 @@ export default function UpgradePage() {
           }
 
           // Użytkownik jest uprawniony tylko, jeśli ma plan "free"
-          if (data.plan === "free" && data.status === "active") {
+          if (data.plan === "free")  {
             setIsEligible(true);
           } else {
             router.push("/dashboard"); // Przekieruj na /dashboard, jeśli plan nie jest Free

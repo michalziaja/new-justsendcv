@@ -1,0 +1,30 @@
+body {
+    width: 300px;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+  }
+  
+  h1 {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  #user-info p {
+    margin: 5px 0;
+  }
+  
+  a {
+    color: #0078d4;
+    text-decoration: none;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+
+  .save-button-saved {
+    background: linear-gradient(90deg, #a686f1 0%, #7dddec 100%);
+    cursor: default;
+    pointer-events: none;
+    transition: none;
+  }

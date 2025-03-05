@@ -1,5 +1,3 @@
-//app/api/subscriptions-upgrade/route.tsx
-
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
@@ -10,7 +8,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(request: Request) {
-  const { userId, getToken } = await auth();
+  const authResult = await auth(); // Pobierz obiekt Auth
+  const { userId, getToken } = authResult;
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -49,7 +48,31 @@ export async function POST(request: Request) {
     );
   }
 
-  // Inicjalizacja płatności Stripe dla planu Premium (bez zmiany subskrypcji)
+  // Pobierz email użytkownika z tabeli profiles w Supabase, używając userId z Clerk
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("email")
+    .eq("user_id", userId)
+    .single();
+
+  if (profileError) {
+    console.error("Błąd pobierania profilu użytkownika:", profileError);
+    return NextResponse.json(
+      { error: "Nie można pobrać profilu użytkownika", details: profileError.message },
+      { status: 500 }
+    );
+  }
+
+  if (!profile || !profile.email) {
+    return NextResponse.json(
+      { error: "Nie można pobrać adresu e-mail użytkownika z profilu" },
+      { status: 400 }
+    );
+  }
+
+  const customerEmail = profile.email; // Użyj email z tabeli profiles
+
+  // Inicjalizacja płatności Stripe dla planu Premium z automatycznym wypełnieniem email
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: [
@@ -70,7 +93,7 @@ export async function POST(request: Request) {
       }
     },
     client_reference_id: userId,
-    customer_email: (await auth()).sessionClaims?.email as string,
+    customer_email: customerEmail, // Użyj email z profiles
     allow_promotion_codes: true,
   });
 
