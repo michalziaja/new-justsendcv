@@ -12,6 +12,7 @@
 /supabase
 # testing
 /coverage
+/stripe-test
 
 # next.js
 /.next/
